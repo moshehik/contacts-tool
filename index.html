@@ -240,6 +240,7 @@
         <li>במכשיר: <span class="path">הגדרות ▸ ספר טלפונים ▸ שחזור אנשי קשר</span> ובוחרים את קובץ ה-VCF.</li>
         <li>למכשירים ישנים/מיוחדים שדורשים פורמט VCF ספציפי לדגם — ניתן להמיר את קובץ ה-CSV שהתקבל כאן דרך תוכנת <b>FK TOOL</b> (חינמית, נפוצה בציבור החרדי) בלשונית "המרת אנשי קשר", ולבחור את הדגם המדויק.</li>
       </ol>
+      <div class="note">מבנה הקובץ (VERSION:2.1, TEL;HOME/TEL;CELL) נבדק מול קובץ VCF אמיתי שיוצא ממכשיר כשר — כדי להבטיח התאמה מלאה.</div>
       <div class="note">שיטה חלופית ופשוטה לכל דגם: יבוא ה-CSV ל-Google Contacts (כמו בלשונית הראשונה) ואז ייצוא מ-Google כ"vCard" — לעיתים תואם יותר טוב למכשירים ישנים.</div>
     </div>
 
@@ -340,13 +341,15 @@ function toCsv(rows) {
   return "﻿" + lines.join("\r\n");
 }
 
+const VCF_TEL_TYPE = { Home: "HOME", Mobile: "CELL" };
+
 function toVcf(rows) {
   const blocks = rows.map(r => [
     "BEGIN:VCARD",
-    "VERSION:3.0",
+    "VERSION:2.1",
     `N:${r.Name};;;;`,
     `FN:${r.Name}`,
-    `TEL;TYPE=${r.PhoneType.toUpperCase()}:${r.PhoneValue}`,
+    `TEL;${VCF_TEL_TYPE[r.PhoneType] || "CELL"}:${r.PhoneValue}`,
     "END:VCARD"
   ].join("\r\n"));
   return blocks.join("\r\n") + "\r\n";
