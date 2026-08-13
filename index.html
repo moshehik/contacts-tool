@@ -343,15 +343,31 @@ function toCsv(rows) {
 
 const VCF_TEL_TYPE = { Home: "HOME", Mobile: "CELL" };
 
+// vCard 2.1 has no default text encoding - non-ASCII (Hebrew) must be
+// declared explicitly as quoted-printable UTF-8, or old/strict parsers
+// (the kind that produce untyped TEL;CELL: lines) may show it garbled.
+function qpEncodeUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let out = "";
+  for (const b of bytes) {
+    if ((b >= 33 && b <= 126 && b !== 0x3D) || b === 0x20) out += String.fromCharCode(b);
+    else out += "=" + b.toString(16).toUpperCase().padStart(2, "0");
+  }
+  return out;
+}
+
 function toVcf(rows) {
-  const blocks = rows.map(r => [
-    "BEGIN:VCARD",
-    "VERSION:2.1",
-    `N:${r.Name};;;;`,
-    `FN:${r.Name}`,
-    `TEL;${VCF_TEL_TYPE[r.PhoneType] || "CELL"}:${r.PhoneValue}`,
-    "END:VCARD"
-  ].join("\r\n"));
+  const blocks = rows.map(r => {
+    const qp = qpEncodeUtf8(r.Name);
+    return [
+      "BEGIN:VCARD",
+      "VERSION:2.1",
+      `N;CHARSET=UTF-8;ENCODING=QUOTED-PRINTABLE:${qp};;;;`,
+      `FN;CHARSET=UTF-8;ENCODING=QUOTED-PRINTABLE:${qp}`,
+      `TEL;${VCF_TEL_TYPE[r.PhoneType] || "CELL"}:${r.PhoneValue}`,
+      "END:VCARD"
+    ].join("\r\n");
+  });
   return blocks.join("\r\n") + "\r\n";
 }
 
