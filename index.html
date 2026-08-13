@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>יצירת אנשי קשר לגוגל מקובץ אקסל</title>
+<script src="xlsx.full.min.js"></script>
+<style>
+  body { font-family: Arial, Segoe UI, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 16px; color: #222; }
+  h1 { font-size: 22px; }
+  .box { border: 2px dashed #999; border-radius: 10px; padding: 30px; text-align: center; background: #fafafa; }
+  .box.drag { background: #eef6ff; border-color: #3b82f6; }
+  input[type=file] { margin-top: 10px; }
+  button { font-size: 16px; padding: 10px 22px; border-radius: 8px; border: none; background: #1a73e8; color: #fff; cursor: pointer; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  button.secondary { background: #444; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; font-size: 14px; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; }
+  th { background: #f0f0f0; }
+  #status { margin: 14px 0; font-weight: bold; }
+  #status.err { color: #c00; }
+  #status.ok { color: #0a7d2c; }
+  .actions { margin: 16px 0; display: flex; gap: 10px; }
+  .hint { color: #666; font-size: 13px; margin-top: 6px; }
+  #preview-wrap { max-height: 420px; overflow: auto; border: 1px solid #eee; }
+</style>
+</head>
+<body>
+
+<h1>יצירת אנשי קשר (Google) מקובץ Excel</h1>
+<p>מעלים קובץ Excel רגיל (xlsx/xls) עם עמודות: משפחה, שם פרטי, תאריך לידה, כתובת, ו-3 עמודות טלפון.<br>
+לכל מספר טלפון ייווצר איש קשר נפרד בשם <b>פז &lt;משפחה&gt; בית/אבא/אמא</b>, בפורמט CSV מוכן לייבוא ל-Google Contacts.</p>
+
+<div class="box" id="dropzone">
+  <div>גררו לכאן קובץ Excel, או בחרו קובץ:</div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+</div>
+
+<div id="status"></div>
+
+<div id="preview-wrap"></div>
+
+<div class="actions" id="actions" style="display:none">
+  <button id="downloadBtn">הורדת קובץ CSV לייבוא לגוגל</button>
+</div>
+
+<script>
+const PHONE_LABELS = ["בית", "אבא", "אמא"];
+const PHONE_TYPES  = ["Home", "Mobile", "Mobile"];
+
+const GOOGLE_HEADERS = [
+  "Name","Given Name","Additional Name","Family Name","Yomi Name",
+  "Given Name Yomi","Additional Name Yomi","Family Name Yomi",
+  "Name Prefix","Name Suffix","Initials","Nickname","Short Name",
+  "Maiden Name","Birthday","Gender","Location","Billing Information",
+  "Directory Server","Mileage","Occupation","Hobby","Sensitivity",
+  "Priority","Subject","Notes","Language","Photo","Group Membership",
+  "E-mail 1 - Type","E-mail 1 - Value",
+  "Phone 1 - Type","Phone 1 - Value"
+];
+
+let generatedRows = null;
+
+function normalizePhone(raw) {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  if (!digits || digits === "0") return "";
+  return digits.startsWith("0") ? digits : "0" + digits;
+}
+
+function findFamilyCol(headerRow, dataRows) {
+  for (let i = 0; i < headerRow.length; i++) {
+    if ((headerRow[i] || "").includes("משפח")) return i;
+  }
+  const nonEmpty = dataRows.filter(r => r.some(c => String(c ?? "").trim() !== ""));
+  const numericFirstCol = nonEmpty.length > 0 && nonEmpty.every(r => /^\d+$/.test(String(r[0] ?? "").trim()));
+  return numericFirstCol ? 1 : 0;
+}
+
+function convertRows(rows) {
+  rows = rows.map(r => r.map(c => (c === undefined || c === null) ? "" : String(c).trim()));
+  rows = rows.filter(r => r.some(c => c !== ""));
+  if (rows.length < 2) throw new Error("לא נמצאו שורות נתונים בקובץ");
+
+  const headerRow = rows[0];
+  const dataRows = rows.slice(1);
+  const familyCol = findFamilyCol(headerRow, dataRows);
+
+  const nCols = Math.max(...rows.map(r => r.length));
+  let phoneCols = [];
+  headerRow.forEach((c, i) => { if ((c || "").includes("טלפ")) phoneCols.push(i); });
+  if (phoneCols.length !== 3) phoneCols = [nCols - 3, nCols - 2, nCols - 1];
+
+  const out = [];
+  for (const row of dataRows) {
+    if (familyCol >= row.length || !row[familyCol]) continue;
+    const family = row[familyCol];
+    for (let k = 0; k < 3; k++) {
+      const pcol = phoneCols[k];
+      if (pcol >= row.length) continue;
+      const phone = normalizePhone(row[pcol]);
+      if (!phone) continue;
+      out.push({
+        Name: `פז ${family} ${PHONE_LABELS[k]}`,
+        FamilyName: family,
+        PhoneType: PHONE_TYPES[k],
+        PhoneValue: phone
+      });
+    }
+  }
+  return out;
+}
+
+function toCsv(rows) {
+  const esc = v => {
+    v = v ?? "";
+    if (/[",\n]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  };
+  const lines = [GOOGLE_HEADERS.map(esc).join(",")];
+  for (const r of rows) {
+    const map = {
+      "Name": r.Name,
+      "Family Name": r.FamilyName,
+      "Phone 1 - Type": r.PhoneType,
+      "Phone 1 - Value": r.PhoneValue
+    };
+    lines.push(GOOGLE_HEADERS.map(h => esc(map[h] || "")).join(","));
+  }
+  return "﻿" + lines.join("\r\n");
+}
+
+function renderPreview(rows) {
+  const wrap = document.getElementById("preview-wrap");
+  if (!rows.length) { wrap.innerHTML = ""; return; }
+  let html = "<table><tr><th>שם איש קשר</th><th>טלפון</th></tr>";
+  for (const r of rows) {
+    html += `<tr><td>${r.Name}</td><td>${r.PhoneValue}</td></tr>`;
+  }
+  html += "</table>";
+  wrap.innerHTML = html;
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = cls || "";
+}
+
+function handleFile(file) {
+  if (!file) return;
+  setStatus("קורא קובץ...", "");
+  document.getElementById("actions").style.display = "none";
+  document.getElementById("preview-wrap").innerHTML = "";
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "" });
+
+      generatedRows = convertRows(rows);
+      renderPreview(generatedRows);
+
+      if (generatedRows.length === 0) {
+        setStatus("לא נוצרו אנשי קשר - בדקו שהקובץ מכיל עמודת משפחה ו-3 עמודות טלפון.", "err");
+      } else {
+        setStatus(`נוצרו ${generatedRows.length} אנשי קשר. אפשר להוריד את קובץ ה-CSV.`, "ok");
+        document.getElementById("actions").style.display = "flex";
+      }
+    } catch (err) {
+      setStatus("שגיאה בעיבוד הקובץ: " + err.message, "err");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+document.getElementById("fileInput").addEventListener("change", (e) => {
+  handleFile(e.target.files[0]);
+});
+
+const dz = document.getElementById("dropzone");
+dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("drag"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+dz.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dz.classList.remove("drag");
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  if (!generatedRows || !generatedRows.length) return;
+  const csv = toCsv(generatedRows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "contacts_google.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
