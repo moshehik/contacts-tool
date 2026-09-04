@@ -122,6 +122,39 @@
   button.primary svg{width:17px; height:17px}
   button.primary:disabled{opacity:.5; cursor:not-allowed}
 
+  .dev-picker{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+  .dev{
+    padding:8px 14px; border-radius:999px; border:2px solid var(--border);
+    background:var(--card-solid); font-size:13px; cursor:pointer;
+    color:var(--text-dim); font-weight:700;
+  }
+  .dev.sel{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+  #devHint{margin-top:10px; font-size:12.5px; color:var(--text-dim); line-height:1.6}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+  .tab{
+    padding:8px 14px; border-radius:999px; border:1px solid var(--border); background:var(--card-solid);
+    font-size:13px; cursor:pointer; color:var(--text-dim); font-weight:600;
+  }
+  .tab.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  ol{margin:0; padding-inline-start:22px; line-height:1.9; font-size:14px}
+  ol li b{color:var(--accent)}
+  .path{
+    display:inline-block; background:var(--accent-soft); color:var(--accent);
+    padding:1px 8px; border-radius:6px; font-size:12.5px; font-family:Consolas,monospace;
+  }
+  .warn{
+    margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--err-bg);
+    font-size:12.5px; color:var(--err); line-height:1.6; font-weight:600;
+  }
+  .note{
+    margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft);
+    font-size:12.5px; color:var(--text-dim); line-height:1.6;
+  }
+  .note a{color:var(--accent); font-weight:600}
+  .diff-old{color:var(--err); text-decoration:line-through}
+  .diff-new{color:var(--ok); font-weight:700}
   footer{text-align:center; color:var(--text-dim); font-size:12px; margin-top:30px}
 </style>
 </head>
@@ -196,6 +229,16 @@
         <div class="fmt-desc">קובץ אנשי קשר אוניברסלי — מתאים לרוב הפלאפונים הכשרים (שחזור מכרטיס זיכרון) ולשליחה ישירה בוואטסאפ.</div>
       </div>
     </div>
+    <div style="margin-top:16px">
+      <div style="font-size:13.5px; font-weight:700; margin-bottom:8px">לאיזה מכשיר מיועד הקובץ?</div>
+      <div class="dev-picker" id="devPicker">
+        <div class="dev sel" data-dev="q7">קיוליקס Q7 / אנדרואיד</div>
+        <div class="dev" data-dev="q8">קיוליקס Q8 כשר (כרטיס בלבד)</div>
+        <div class="dev" data-dev="old">פלאפון כשר ישן</div>
+        <div class="dev" data-dev="iphone">אייפון</div>
+      </div>
+      <div id="devHint"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -218,6 +261,84 @@
       <button class="primary" id="downloadBtn">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6zM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2z" transform="rotate(180 12 12)"/></svg>
         <span id="downloadLabel">הורדת קובץ</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg></div>
+      <h2>שלב 4 · הכנסה לפלאפון — הוראות לפי סוג מכשיר</h2>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="q7">קיוליקס Q7 / אנדרואיד</button>
+      <button class="tab" data-tab="q8">קיוליקס Q8 כשר</button>
+      <button class="tab" data-tab="old">פלאפון כשר ישן</button>
+      <button class="tab" data-tab="iphone">אייפון</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="q7">
+      <ol>
+        <li>בכלי הזה בוחרים <b>Google CSV</b>, מעלים את קובץ ה-Excel ולוחצים "הורדת קובץ".</li>
+        <li>נכנסים ל־<span class="path">contacts.google.com</span> במחשב, לוחצים "ייבוא" (Import) ובוחרים את קובץ ה-CSV שהורד.</li>
+        <li>במכשיר: <span class="path">הגדרות ▸ חשבונות ▸ הוספת חשבון Google</span> — מתחברים לאותו חשבון Google.</li>
+        <li>המכשיר מסתנכרן אוטומטית תוך דקה-שתיים ואנשי הקשר מופיעים.</li>
+      </ol>
+      <div class="note">אם כבר יש חשבון Google במכשיר — מספיק לוודא ש"סנכרון אנשי קשר" פעיל, בלי להוסיף חשבון מחדש.</div>
+    </div>
+
+    <div class="tab-panel" data-panel="q8">
+      <ol>
+        <li>בכלי הזה בוחרים <b>vCard (VCF)</b>, מעלים את קובץ ה-Excel ולוחצים "הורדת קובץ" — מתקבל קובץ <span class="path">contacts.vcf</span> בפורמט 2.1 שמתאים ל-Q8.</li>
+        <li>במכשיר: <span class="path">אנשי קשר ▸ אפשרויות ▸ הגדרות</span> — מיקום שמירה מועדף = <b>טלפון</b> (לא SIM — ב-SIM נכנסים כ-250 בלבד וייבוא גדול נכשל בשקט!), תצוגת אנשי קשר = <b>הכל</b>.</li>
+        <li>מעתיקים <b>קובץ אחד בלבד</b> לתיקיית <span class="path">vCard</span> בכרטיס הזיכרון (לא לתיקיית Alarm!). ה-Q8 שומר עד 3000 אנשי קשר.</li>
+        <li>מכבים ומדליקים את המכשיר עם הכרטיס בפנים, נכנסים ל־<span class="path">אנשי קשר ▸ אפשרויות ▸ יבוא / שחזור מכרטיס זיכרון</span>, בוחרים את הקובץ ומסמנים הכל.</li>
+        <li>מחכים לסיום הייבוא (קובץ גדול לוקח דקה-שתיים) ובודקים שנקלטו כל אנשי הקשר.</li>
+      </ol>
+      <div class="warn">לא לפתוח את ה-VCF דרך מנהל הקבצים — פתיחה ישירה מייבאת רק איש קשר אחד! חייבים לייבא דרך תפריט אנשי הקשר.</div>
+      <div class="note">מעבירים קובץ שיוצא מ-Q7? הייצוא מוסיף סיומות כמו <span class="path">_1</span> לשמות — מנקים אותן בכלי הניקוי בשלב 5 לפני הייבוא ל-Q8. אם מייבאים קובץ מתוקן על מכשיר שכבר מכיל את הישן — קודם מוחקים הכל (אנשי קשר ▸ אפשרויות ▸ מחק הכל) כדי לא לקבל כפילויות.</div>
+    </div>
+
+    <div class="tab-panel" data-panel="old">
+      <ol>
+        <li>בכלי הזה בוחרים <b>vCard (VCF)</b>, מעלים את קובץ ה-Excel ולוחצים "הורדת קובץ" — יתקבל קובץ בשם <span class="path">contacts.vcf</span>.</li>
+        <li>מעתיקים את הקובץ לכרטיס הזיכרון (SD) של המכשיר, או שולחים אותו לעצמכם בוואטסאפ ופותחים מהמכשיר.</li>
+        <li>במכשיר: <span class="path">הגדרות ▸ ספר טלפונים ▸ שחזור אנשי קשר</span> ובוחרים את קובץ ה-VCF.</li>
+        <li>למכשירים שדורשים פורמט VCF ספציפי לדגם — ניתן להמיר את קובץ ה-CSV שהתקבל כאן דרך תוכנת <b>FK TOOL</b> (חינמית) בלשונית "המרת אנשי קשר", ולבחור את הדגם המדויק.</li>
+      </ol>
+      <div class="note">מבנה הקובץ (VERSION:2.1, TEL;HOME/TEL;CELL) נבדק מול קובץ VCF אמיתי שיוצא ממכשיר כשר — כדי להבטיח התאמה מלאה.</div>
+    </div>
+
+    <div class="tab-panel" data-panel="iphone">
+      <ol>
+        <li>בוחרים כאן <b>vCard (VCF)</b> ומורידים את הקובץ.</li>
+        <li>שולחים את הקובץ לעצמכם (מייל / וואטסאפ) ופותחים אותו מהאייפון — מופיעה הצעה "הוספת אנשי קשר" ולוחצים "הוסף את כל אנשי הקשר".</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.8 6.3-6 6-2.6-2.6a1 1 0 0 1 1.4-1.4l1.2 1.2 4.6-4.6a1 1 0 0 1 1.4 1.4z"/></svg></div>
+      <h2>שלב 5 · ניקוי קובץ VCF שיוצא מ-Q7 (הסרת _1 מהשמות)</h2>
+    </div>
+    <p class="sub" style="margin:0 0 14px">הייצוא מה-Q7 מוסיף לכל שם סיומת מונה כמו <span class="path">_1</span> או <span class="path">_1_1</span>. מעלים כאן את קובץ ה-VCF, והכלי מסיר את הסיומות ומחזיר קובץ נקי בפורמט 2.1 שמתאים ל-Q8.</p>
+    <div class="dropzone" id="vcfDropzone">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 0 1 1 1v10.17l3.29-3.3a1 1 0 1 1 1.42 1.42l-5 5a1 1 0 0 1-1.42 0l-5-5a1 1 0 1 1 1.42-1.42L11 13.17V3a1 1 0 0 1 1-1zM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2z"/></svg>
+      <div class="dz-title">גררו לכאן קובץ VCF מה-Q7</div>
+      <div class="dz-sub">vcf בלבד — הפורמט והמספרים נשמרים, רק השמות מנוקים</div>
+      <label class="browse-btn" for="vcfInput">בחירת קובץ VCF מהמחשב</label>
+      <input type="file" id="vcfInput" accept=".vcf">
+    </div>
+
+    <div id="vcfStatus"></div>
+    <div id="vcf-preview-wrap"></div>
+
+    <div class="actions" id="vcfActions" style="display:none">
+      <button class="primary" id="vcfDownloadBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6zM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2z" transform="rotate(180 12 12)"/></svg>
+        <span>הורדת VCF נקי ל-Q8</span>
       </button>
     </div>
   </div>
@@ -473,6 +594,184 @@ document.querySelectorAll(".fmt[data-mode]").forEach(el => {
 });
 document.getElementById("prefixInput").addEventListener("input", updatePrefixPreview);
 updatePrefixPreview();
+
+// --- Device picker: recommends a format + hint per target phone ---
+const DEV_META = {
+  q7:     { fmt: "csv", hint: "מומלץ: Google CSV — מייבאים ל-contacts.google.com וה-Q7 מסתנכרן לבד. פרטים בלשונית Q7 בשלב 4." },
+  q8:     { fmt: "vcf", hint: "מומלץ: vCard (VCF) גרסה 2.1 — מיקום שמירה: טלפון (לא SIM!), מעתיקים לתיקיית vCard ומייבאים דרך תפריט אנשי הקשר. פרטים בלשונית Q8 בשלב 4." },
+  old:    { fmt: "vcf", hint: "מומלץ: vCard (VCF) — שחזור מכרטיס זיכרון דרך ספר הטלפונים. פרטים בלשונית המתאימה בשלב 4." },
+  iphone: { fmt: "vcf", hint: "מומלץ: vCard (VCF) — שולחים לעצמכם ופותחים מהאייפון. פרטים בלשונית אייפון בשלב 4." }
+};
+function setFormat(fmt) {
+  document.querySelectorAll(".fmt[data-fmt]").forEach(x => x.classList.toggle("sel", x.dataset.fmt === fmt));
+  currentFormat = fmt;
+  document.getElementById("downloadLabel").textContent =
+    fmt === "csv" ? "הורדת קובץ CSV לייבוא לגוגל" : "הורדת קובץ vCard (VCF)";
+}
+function selectTab(name) {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+  document.querySelectorAll(".tab-panel").forEach(x => x.classList.toggle("active", x.dataset.panel === name));
+}
+document.querySelectorAll(".dev").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".dev").forEach(x => x.classList.remove("sel"));
+    el.classList.add("sel");
+    const meta = DEV_META[el.dataset.dev];
+    setFormat(meta.fmt);
+    document.getElementById("devHint").textContent = meta.hint;
+    selectTab(el.dataset.dev === "q7" ? "q7" : el.dataset.dev);
+  });
+});
+document.getElementById("devHint").textContent = DEV_META.q7.hint;
+
+document.querySelectorAll(".tab").forEach(el => {
+  el.addEventListener("click", () => selectTab(el.dataset.tab));
+});
+
+// --- VCF cleaner: removes Q7 export counter suffixes (_1, _1_1, _2 ...) from names ---
+const VCF_SUFFIX_RE = /(_\d+)+$/;
+let cleanedVcfText = "";
+let cleanedVcfCount = 0;
+
+function cleanVcfName(raw) {
+  return raw.replace(VCF_SUFFIX_RE, "").trim();
+}
+
+function cleanVcf(text) {
+  text = String(text || "").replace(/\r\r\n/g, "\r\n").replace(/\r(?!\n)/g, "\r\n");
+  const cards = text.match(/BEGIN:VCARD[\s\S]*?END:VCARD/g) || [];
+  let cleaned = 0;
+  const preview = [];
+  const out = cards.map(card => {
+    const unfolded = card.replace(/=\r\n/g, "").replace(/=\n/g, "");
+    const lines = unfolded.split(/\r?\n/);
+    let cardChanged = false;
+    const fixed = lines.map(line => {
+      if (/^FN[;:]/.test(line)) {
+        const i = line.indexOf(":");
+        const before = line.slice(0, i + 1), val = line.slice(i + 1);
+        const nv = cleanVcfName(val);
+        if (nv !== val) {
+          cardChanged = true;
+          if (preview.length < 30) preview.push([val, nv]);
+        }
+        return before + nv;
+      }
+      if (/^N[;:]/.test(line)) {
+        // Q7 exports put the name in the 2nd component ("N:...:;name;;;"), so clean every component
+        const i = line.indexOf(":");
+        const before = line.slice(0, i + 1), rest = line.slice(i + 1);
+        const parts = rest.split(";");
+        let firstOld = "", firstNew = "";
+        for (let k = 0; k < parts.length; k++) {
+          const nv = cleanVcfName(parts[k]);
+          if (nv !== parts[k]) {
+            if (!firstOld) { firstOld = parts[k]; firstNew = nv; }
+            parts[k] = nv;
+            cardChanged = true;
+          }
+        }
+        if (firstOld && preview.length < 30) preview.push([firstOld, firstNew]);
+        return before + parts.join(";");
+      }
+      return line;
+    });
+    if (cardChanged) cleaned++;
+    return fixed.map(foldVcfLine).join("\r\n");
+  });
+  return { text: out.join("\r\n") + "\r\n", total: cards.length, cleaned, preview };
+}
+
+// vCard lines must stay short (old parsers like the Q8 reject very long lines).
+// Re-fold unfolded lines: QP-safe "=<CRLF>" for encoded lines, "<CRLF>+space" otherwise.
+function foldVcfLine(line) {
+  if (line.length <= 70) return line;
+  const qp = line.indexOf("=") !== -1;
+  const width = /[^\x00-\x7F]/.test(line) ? 30 : 60;
+  let res = "", i = 0;
+  while (i < line.length) {
+    let j = Math.min(i + width, line.length);
+    if (qp) {
+      while (j > i && /=[0-9A-F]?$/.test(line.slice(i, j))) j--;
+      if (j <= i) j = Math.min(i + width, line.length);
+    }
+    res += line.slice(i, j);
+    i = j;
+    if (i < line.length) res += qp ? "=\r\n" : "\r\n ";
+  }
+  return res;
+}
+
+function setVcfStatus(msg, cls) {
+  const el = document.getElementById("vcfStatus");
+  el.textContent = msg;
+  el.className = "show " + (cls || "");
+  el.id = "vcfStatus";
+  el.style.cssText = "margin:16px 0 0; padding:12px 14px; border-radius:12px; font-size:14px; font-weight:600;";
+  if (cls === "ok") { el.style.background = "var(--ok-bg)"; el.style.color = "var(--ok)"; }
+  else if (cls === "err") { el.style.background = "var(--err-bg)"; el.style.color = "var(--err)"; }
+  else { el.style.background = "var(--accent-soft)"; el.style.color = "var(--text)"; }
+}
+
+function escHtml(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function handleVcfFile(file) {
+  if (!file) return;
+  setVcfStatus("קורא קובץ...", "");
+  document.getElementById("vcfActions").style.display = "none";
+  document.getElementById("vcf-preview-wrap").innerHTML = "";
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const res = cleanVcf(String(e.target.result || ""));
+      if (!res.total) { setVcfStatus("לא נמצאו אנשי קשר בקובץ — ודאו שזה קובץ VCF תקין.", "err"); return; }
+      cleanedVcfText = res.text;
+      cleanedVcfCount = res.total;
+      let html = "<div id='preview-wrap' style='max-height:360px; overflow:auto; border:1px solid var(--border); border-radius:12px; margin-top:16px'><table><tr><th>שם מקורי</th><th>שם נקי</th></tr>";
+      for (const [o, n] of res.preview) {
+        html += `<tr><td><span class="diff-old">${escHtml(o)}</span></td><td><span class="diff-new">${escHtml(n)}</span></td></tr>`;
+      }
+      html += "</table></div>";
+      document.getElementById("vcf-preview-wrap").innerHTML = html;
+      setVcfStatus(`נמצאו ${res.total} אנשי קשר, נוקו ${res.cleaned} שמות. אפשר להוריד את הקובץ הנקי.`, "ok");
+      document.getElementById("vcfActions").style.display = "flex";
+    } catch (err) {
+      setVcfStatus("שגיאה בעיבוד הקובץ: " + err.message, "err");
+    }
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+document.getElementById("vcfInput").addEventListener("change", (e) => {
+  handleVcfFile(e.target.files[0]);
+});
+
+const vdz = document.getElementById("vcfDropzone");
+vdz.addEventListener("dragover", (e) => { e.preventDefault(); vdz.classList.add("drag"); });
+vdz.addEventListener("dragleave", () => vdz.classList.remove("drag"));
+vdz.addEventListener("drop", (e) => {
+  e.preventDefault();
+  vdz.classList.remove("drag");
+  if (e.dataTransfer.files.length) handleVcfFile(e.dataTransfer.files[0]);
+});
+vdz.addEventListener("click", (e) => {
+  if (e.target.tagName !== "LABEL") document.getElementById("vcfInput").click();
+});
+
+document.getElementById("vcfDownloadBtn").addEventListener("click", () => {
+  if (!cleanedVcfText) return;
+  const blob = new Blob([cleanedVcfText], { type: "text/vcard;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "contacts_Q8_clean.vcf";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
 
 document.getElementById("downloadBtn").addEventListener("click", () => {
   if (!generatedRows || !generatedRows.length) return;
